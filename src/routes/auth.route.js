@@ -4,12 +4,20 @@ const router = express.Router();
 // Controllers
 const { 
     register, 
-    login 
+    login,
+    logout
 } = require("../controllers/auth.controller");
 
-// Routes
+// Middleware
+const { verifyToken } = require("../middlewares/authMiddleware");
+
+// Routes - Register
 router.post("/register", register);
 
+// Login
 router.post("/login", login);
+
+// Logout
+router.post("/logout", verifyToken, logout);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const cookie = require("cookie-parser");
 const {
     createUser,
     findUser
@@ -71,20 +72,44 @@ const login = async (req, res) => {
         const token = await jwt.sign(
             { userId: user.id, email: user.email }, 
             process.env.JWT_ACCESS_TOKEN, 
-            { expiresIn: "1h" }
+            { expiresIn: "1w" }
         );
         const refreshToken = await jwt.sign(
             { userId: user.id, email: user.email },
             process.env.JWT_ACCESS_TOKEN
         );
+
+        res.cookie("jwt", token, {
+            maxAge: 60 * 60 * 24 * 7,
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV !== "development"
+        })
         
         res.json({ token, refreshToken });
     } catch (err) {
+        console.log(err)
         res.status(500).send("Server Error");
     }
 } 
 
+/**
+ * @dev Logout. Logs out authenticated user
+ */
+const logout = async (req, res) => {
+    try {
+        // Clearing JWT Cookie
+        res.cookie("jwt", "", { maxAge: 0 });
+
+        res.status(200).json({ message: "Logout successful" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }   
+}
+
 module.exports = {
     register,
     login,
+    logout
 }
